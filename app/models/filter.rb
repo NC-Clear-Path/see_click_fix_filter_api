@@ -4,6 +4,8 @@ class Filter < ApplicationRecord
   require "json"
   
   # exaple of an issue reported to SeeClickFix
+  # each response has metadata with the number of pages, since pagination is being used by the api
+  # there there many issues returned for the query I sent the api but I just chose the first as an example
   # {
   #   "metadata":
   #     {"pagination":
@@ -15,14 +17,21 @@ class Filter < ApplicationRecord
   #   "errors":{}
     
   # }
+  
+  # I break up my methods into parts so they can be reused and it's easier to read
+  
+  # this method returns the json from the url provided
   def self.get_json(url="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&page=5233&per_page=100")
+    puts "json"
     uri = URI(url)
     response = Net::HTTP.get(uri)
     json = JSON.parse(response)
     return json
   end
   
+  # this method collects the issues from all the pages of the response, since the greatest number of issues the SeeClickFix api display on a single page is 100
   def self.add_issues(json)
+    puts "issues"
     issues = json["issues"]
     pages = json["metadata"]["pagination"]["pages"]
     page = json["metadata"]["pagination"]["page"]
@@ -33,6 +42,7 @@ class Filter < ApplicationRecord
         next_page_url = json["metadata"]["pagination"]["next_page_url"]
         page = json["metadata"]["pagination"]["page"]
         issues.push(json["issues"])
+        puts "On Page #{page} of #{pages} Pages"
         break if next_page_url.nil?
       end
     end
@@ -40,16 +50,23 @@ class Filter < ApplicationRecord
     return issues
   end
   
+  # this calls the other methods without latitude and longitude filters and returns all the issues
   def self.show_issues(url="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&page=5233&per_page=100" )
     json = Filter.get_json(url)
     issues = Filter.add_issues(json)
     return issues
   end
   
-  def self.show_location_issues(lat=29.5859296, long=-95.5525199)
+  # this calls the show method but includes latitude and longitude filters, along with a optional search filter
+  # leaving the search empty has no impact beyond not providing additional filtering, and it takes a lot longer to get results since there will be so many
+  def self.show_location_issues(lat=29.5859296, long=-95.5525199, search='')
     # https://seeclickfix.com/api/v2/issues?lat=29.5859296&lng=-95.5525199&sort=distance&status=open,acknowledged&per_page=1&page=1
-    url ="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&lat=#{lat}&lng=#{long}&sort=distance&per_page=100"
+    url ="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&lat=#{lat}&lng=#{long}&sort=distance&per_page=100&search=#{search}"
     Filter.show_issues(url)
+  end
+  
+  def self.filters
+    
   end
   
 end
