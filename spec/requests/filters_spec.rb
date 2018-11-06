@@ -1,5 +1,5 @@
 require 'rails_helper'
 
-RSpec.describe FiltersController, type: :request do
+RSpec.describe 'Filters API', type: :request do
 
 end
