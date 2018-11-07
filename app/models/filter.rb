@@ -61,13 +61,13 @@ class Filter < ApplicationRecord
   # this calls the show method but includes latitude and longitude filters, along with a optional search filter
   # leaving the search empty has no impact beyond not providing additional filtering, and it takes a lot longer to get results since there will be so many
   def self.show_location_issues(lat=35.787743, lng=-78.644257, search='')
-    url = Filter.get_last_page + "&lat=#{lat}&lng=#{lng}&sort=distance&sort_direction=ASC&search=#{search}"
+    url = Filter.get_last_page + "&lat=#{lat}&lng=#{lng}&sort=distance&search=#{search}"
     # url ="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&lat=#{lat}&lng=#{lng}&sort=distance&per_page=100&search=#{search}"
     Filter.show_issues(url)
   end
   
   # temporarily I'm am just getting the last page of the results to speed up the load time
-  def self.get_last_page(url="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&per_page=100")
+  def self.get_last_page(url="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&per_page=100&sort_direction=ASC")
     json = Filter.get_json(url)
     pages = json["metadata"]["pagination"]["pages"]
     url = url + "&page=#{pages}"
