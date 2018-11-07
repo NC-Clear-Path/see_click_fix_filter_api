@@ -33,14 +33,15 @@ class Filter < ApplicationRecord
   # this method collects the issues from all the pages of the response, since the greatest number of issues the SeeClickFix api display on a single page is 100
   def self.add_issues(json)
     issues = json["issues"]
-    pages = json["metadata"]["pagination"]["pages"]
-    page = json["metadata"]["pagination"]["page"]
-    next_page_url = json["metadata"]["pagination"]["next_page_url"]
+    pages = json["metadata"]["pagination"]["pages"] # number of pages of issues for the query
+    page = json["metadata"]["pagination"]["page"] # number of the page being currently displayed
+    next_page_url = json["metadata"]["pagination"]["next_page_url"] # literally the link to the next page of issues for the query
     unless next_page_url.nil?
       while page <= pages
         json=Filter.get_json(next_page_url)
         next_page_url = json["metadata"]["pagination"]["next_page_url"]
         page = json["metadata"]["pagination"]["page"]
+        pages = json["metadata"]["pagination"]["pages"]
         issues.push(json["issues"])
         puts "On Page #{page} of #{pages} Pages"
         break if next_page_url.nil?
@@ -51,7 +52,7 @@ class Filter < ApplicationRecord
   end
   
   # this calls the other methods without latitude and longitude filters and returns all the issues
-  def self.show_issues(url="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&page=5233&per_page=100" )
+  def self.show_issues(url=Filter.get_last_page)
     json = Filter.get_json(url)
     issues = Filter.add_issues(json)
     return issues
@@ -59,9 +60,18 @@ class Filter < ApplicationRecord
   
   # this calls the show method but includes latitude and longitude filters, along with a optional search filter
   # leaving the search empty has no impact beyond not providing additional filtering, and it takes a lot longer to get results since there will be so many
-  def self.show_location_issues(lat=29.5859296, long=-95.5525199, search='')
-    url ="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&lat=#{lat}&lng=#{long}&sort=distance&per_page=100&search=#{search}"
+  def self.show_location_issues(lat=35.787743, lng=-78.644257, search='')
+    url = Filter.get_last_page + "&lat=#{lat}&lng=#{lng}&sort=distance&sort_direction=ASC&search=#{search}"
+    # url ="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&lat=#{lat}&lng=#{lng}&sort=distance&per_page=100&search=#{search}"
     Filter.show_issues(url)
+  end
+  
+  # temporarily I'm am just getting the last page of the results to speed up the load time
+  def self.get_last_page(url="https://seeclickfix.com/api/v2/issues?status=open,acknowledged&per_page=100")
+    json = Filter.get_json(url)
+    pages = json["metadata"]["pagination"]["pages"]
+    url = url + "&page=#{pages}"
+    return url
   end
   
   def self.filters
