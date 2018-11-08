@@ -46,8 +46,8 @@ class Filter < ApplicationRecord
     next_page_url = json["metadata"]["pagination"]["next_page_url"] # literally the link to the next page of issues for the query
     unless next_page_url.nil?
       # while page <= pages
-      # I decided to limit the number of pages, that we get data from, to 5 to help with speed issues
-      while page < 5
+      # I decided to limit the number of pages, that we get data from, to 2 to help with speed issues
+      while page < 2
         json=Filter.get_json(next_page_url)
         next_page_url = json["metadata"]["pagination"]["next_page_url"]
         page = json["metadata"]["pagination"]["page"]

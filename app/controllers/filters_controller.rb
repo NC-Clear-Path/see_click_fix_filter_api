@@ -1,6 +1,5 @@
 class FiltersController < ApplicationController
-    before_action :next_page, only: [:location]
-    # after_action :full_location_issues, only: [:next_page]
+    
   def index
     # ideally this will use the latitude and longitude of the users current location, but temporarily it is showing issues for Raleigh
     all_issues = {issues: (Filter.get_json(Filter.filter_url))["issues"]}
@@ -8,23 +7,15 @@ class FiltersController < ApplicationController
   end
     
   def location
+    # it accepts params for latitude and longitude but has defaults for when neither is provided
+    # right now I have hard coded the defaults but in the future I want them to be based on the location the request came from
+    lat = params[:lat] unless params[:lat].nil?
+    lat = 35.77766295 unless lat
+    lng = params[:lng] unless params[:lng].nil?
+    lng = -78.63974665 unless lng
+    @json = Filter.get_json(Filter.filter_url(lat, lng))
+    @issues = Filter.add_issues(@json)
     json_response(@issues) 
   end
   
-  def full_location_issues
-    json_response(@issues)
-  end
-  
-  private
-  
-  def next_page
-    # I am limiting the location to Raleigh for now but it will take coordinates in the future
-    @json = Filter.get_json(Filter.filter_url)
-    url = @json["metadata"]["pagination"]["next_page_url"]
-    unless url.nil?
-      # @json = Filter.get_json(url)
-      @issues = Filter.add_issues(@json)
-    end
-    
-  end 
 end
